@@ -16,3 +16,23 @@ contract LearnMapping {
         delete myMap[_addr];
     }
 }
+
+contract MappingAssignment {
+    struct Movie {
+        string title;
+        string director;
+    }
+
+    mapping(uint => Movie) movie;
+
+    function addMovie(uint movieId, string memory title, string memory director) public {
+        movie[movieId] = Movie(
+            title,
+            director
+        );
+    }
+
+    function getMovie(uint movieId) public view returns(Movie memory) {
+        return movie[movieId];
+    }
+}
