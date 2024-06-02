@@ -36,3 +36,21 @@ contract MappingAssignment {
         return movie[movieId];
     }
 }
+
+
+contract Allowance {
+    mapping(address => mapping(address => uint)) allowance;
+
+    function remove(address _addrOwner, address _addrSpender) public {
+        delete allowance[_addrOwner][_addrSpender];
+    }
+
+    function add(address _addrOwner, address _addrSpender, uint _amount) public {
+        allowance[_addrOwner][_addrSpender] = _amount;
+    }
+
+    function retrieve(address _addrOwner, address _addrSender) public view returns (uint) {
+        return allowance[_addrOwner][_addrSender];
+    }
+
+}
