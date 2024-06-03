@@ -32,4 +32,14 @@ contract RestrictedAccess {
     function disown() public onlyBy(owner) onlyAfter(creationTime + 10 seconds) {
         delete owner;
     }
+
+    modifier costs(uint cost) {
+        require(msg.value >= cost, "Not enough Ether provided.");
+        _;
+    }
+
+    function forceOwnerChange(address _newOwner) public payable costs(10 wei) {
+        owner = _newOwner;
+    }
+
 }
