@@ -20,4 +20,16 @@ contract RestrictedAccess {
     function changeOwnerAddress(address _newOwner) public onlyBy(owner) {
         owner = _newOwner;
     }
+
+    // We want this to be executed only afte specific period of time.
+    // For example, 3 weeks or more.
+
+    modifier onlyAfter(uint _time) {
+        require(block.timestamp >= _time, "function is called too early!");
+        _;
+    }
+
+    function disown() public onlyBy(owner) onlyAfter(creationTime + 10 seconds) {
+        delete owner;
+    }
 }
