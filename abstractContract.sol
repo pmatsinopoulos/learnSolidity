@@ -27,3 +27,23 @@ contract Teacher is Member {
         return "hello";
     }
 }
+
+abstract contract Calculator {
+    function add(uint a, uint b) virtual public pure returns(uint);
+}
+
+contract Test is Calculator {
+    function add(uint a, uint b) override public pure returns(uint) { return a + b; }
+}
+
+contract A {
+    function a() virtual public pure returns(uint) {
+        return 2;
+    }
+}
+
+contract B is A {
+    function a() override public pure returns(uint) {
+        return 5;
+    }
+}
