@@ -38,6 +38,14 @@ contract D {
     }
 }
 
+contract Dd {
+    C public c = new C();
+
+    function readInfo() public view returns(uint) {
+        return c.info();
+    }
+}
+
 contract E is C {
     uint private result;
 
