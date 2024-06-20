@@ -1,0 +1,10 @@
+{
+  "name": "learnFromOfficialDocumentation",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Panagiotis Matsinopoulos",
+  "license": "MIT",
+  "devDependencies": {
+    "hardhat": "^2.22.5"
+  }
+}
