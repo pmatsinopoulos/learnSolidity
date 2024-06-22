@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNKNOWN
-pragma solidity 0.8.24;
+pragma solidity 0.8.26;
 
 contract SimpleStorage {
   uint256 storedData;
