@@ -3,3 +3,4 @@ artifacts/
 **/artifacts/**
 .deps/
 .envrc
+**/ignition/deployments/
