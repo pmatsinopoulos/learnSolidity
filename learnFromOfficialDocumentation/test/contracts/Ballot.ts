@@ -42,5 +42,16 @@ describe("Ballot", function () {
       const voter = await ballot.voters(deployer.address);
       expect(voter.weight).to.equal(1);
     });
+
+    it("initializes the proposals", async function () {
+      const { ballot } = await loadFixture(deployBallotFixture);
+
+      for (let i = 0; i < proposalNames.length; i++) {
+        const proposal = await ballot.proposals(i);
+        const proposalNameFound = ethers.decodeBytes32String(proposal.name);
+        expect(proposalNameFound).to.equal(proposalNames[i]);
+        expect(proposal.voteCount).to.equal(0);
+      }
+    });
   });
 });
