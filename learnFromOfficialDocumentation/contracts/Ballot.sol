@@ -47,7 +47,7 @@ contract Ballot {
 
     require(!voters[voter].voted, "Voter should not have already voted");
 
-    require(voters[voter].weight == 0);
+    require(voters[voter].weight == 0, "Voter should have voting weight equal to 0");
 
     voters[voter].weight = 1;
   }

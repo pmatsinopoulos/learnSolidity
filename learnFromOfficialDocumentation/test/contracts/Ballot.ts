@@ -7,14 +7,16 @@ describe("Ballot", function () {
   const proposalNamesAsBytes32 = proposalNames.map((proposalName) =>
     ethers.encodeBytes32String(proposalName)
   );
+  const random = ethers.Wallet.createRandom();
+  const randomAddress = random.address;
 
   async function deployBallotFixture() {
-    const [deployer] = await ethers.getSigners();
+    const [deployer, otherAccount] = await ethers.getSigners();
     const Ballot = await hre.ethers.getContractFactory("Ballot");
     const ballot = await Ballot.deploy(proposalNamesAsBytes32);
     await ballot.waitForDeployment();
 
-    return { ballot, deployer };
+    return { ballot, deployer, otherAccount };
   }
 
   describe("#constructor", function () {
@@ -52,6 +54,59 @@ describe("Ballot", function () {
         expect(proposalNameFound).to.equal(proposalNames[i]);
         expect(proposal.voteCount).to.equal(0);
       }
+    });
+  });
+
+  describe("#giveRightToMove", function () {
+    context("when it is not called by the chairperson", function () {
+      it("reverts", async function () {
+        const { ballot, otherAccount } = await loadFixture(deployBallotFixture);
+
+        await expect(
+          ballot.connect(otherAccount).giveRightToVote(randomAddress)
+        ).to.be.revertedWith("Only chairperson can give right to vote.");
+      });
+    });
+
+    context("when voter has already voted", async function () {
+      it("reverts", async function () {
+        const { ballot, otherAccount } = await loadFixture(deployBallotFixture);
+        // setup
+        await ballot.giveRightToVote(otherAccount);
+        await ballot.connect(otherAccount).vote(0);
+
+        // fire
+        await expect(ballot.giveRightToVote(otherAccount)).to.be.revertedWith(
+          "Voter should not have already voted"
+        );
+      });
+    });
+
+    context("when voter does not have voting weight equal to 0", function () {
+      it("reverts", async function () {
+        const { ballot, otherAccount } = await loadFixture(deployBallotFixture);
+        // setup
+        await ballot.giveRightToVote(otherAccount);
+        await ballot.delegate(otherAccount);
+
+        // fire
+        await expect(ballot.giveRightToVote(otherAccount)).to.be.revertedWith(
+          "Voter should have voting weight equal to 0"
+        );
+      });
+    });
+
+    it("gives the address given the right to vote", async function () {
+      const { ballot, otherAccount } = await loadFixture(deployBallotFixture);
+
+      // fire
+      await ballot.giveRightToVote(otherAccount);
+
+      // test
+      const voter = await ballot.voters(otherAccount);
+
+      expect(voter.voted).to.equal(false);
+      expect(voter.weight).to.equal(1);
     });
   });
 });
