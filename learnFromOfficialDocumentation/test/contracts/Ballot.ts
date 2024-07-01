@@ -35,5 +35,12 @@ describe("Ballot", function () {
 
       expect(chairperson).to.equal(deployer.address);
     });
+
+    it("sets the weight for the chairperson to be 1", async function () {
+      const { ballot, deployer } = await loadFixture(deployBallotFixture);
+
+      const voter = await ballot.voters(deployer.address);
+      expect(voter.weight).to.equal(1);
+    });
   });
 });
