@@ -1,5 +1,6 @@
 import hre, { ethers } from "hardhat";
 import { expect } from "chai";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("Ballot", function () {
   const proposalNames: string[] = ["Proposal1", "Proposal2", "Proposal3"];
@@ -8,11 +9,12 @@ describe("Ballot", function () {
   );
 
   async function deployBallotFixture() {
+    const [deployer] = await ethers.getSigners();
     const Ballot = await hre.ethers.getContractFactory("Ballot");
     const ballot = await Ballot.deploy(proposalNamesAsBytes32);
     await ballot.waitForDeployment();
 
-    return { ballot };
+    return { ballot, deployer };
   }
 
   describe("#constructor", function () {
@@ -24,6 +26,14 @@ describe("Ballot", function () {
           "The ballot requires at least 1 proposal"
         );
       });
+    });
+
+    it("sets the chairperson to be the address who deploys the contract", async function () {
+      const { ballot, deployer } = await loadFixture(deployBallotFixture);
+
+      const chairperson = await ballot.chairperson();
+
+      expect(chairperson).to.equal(deployer.address);
     });
   });
 });
