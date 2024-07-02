@@ -11,12 +11,12 @@ describe("Ballot", function () {
   const randomAddress = random.address;
 
   async function deployBallotFixture() {
-    const [deployer, otherAccount] = await ethers.getSigners();
+    const [deployer, otherAccount, thirdAccount] = await ethers.getSigners();
     const Ballot = await hre.ethers.getContractFactory("Ballot");
     const ballot = await Ballot.deploy(proposalNamesAsBytes32);
     await ballot.waitForDeployment();
 
-    return { ballot, deployer, otherAccount };
+    return { ballot, deployer, otherAccount, thirdAccount };
   }
 
   describe("#constructor", function () {
@@ -108,5 +108,45 @@ describe("Ballot", function () {
       expect(voter.voted).to.equal(false);
       expect(voter.weight).to.equal(1);
     });
+  });
+
+  describe("#delegate", function () {
+    context("when the delegator does not have the right to vote", function () {
+      it("reverts", async function () {
+        const { ballot, otherAccount, thirdAccount } = await loadFixture(
+          deployBallotFixture
+        );
+
+        await expect(
+          ballot.connect(thirdAccount).delegate(otherAccount)
+        ).to.be.revertedWith("You have no right to vote");
+      });
+    });
+
+    context("when the delegator has already voted", function () {
+      it("reverts", async function () {
+        const { ballot, otherAccount } = await loadFixture(deployBallotFixture);
+
+        // setup
+        await ballot.vote(0);
+
+        // fire
+        await expect(ballot.delegate(otherAccount)).to.be.revertedWith(
+          "You have already voted"
+        );
+      });
+    });
+
+    context("when the delegator is delegating to themselves", function () {
+      it("reverts", async function () {
+        const { ballot, deployer } = await loadFixture(deployBallotFixture);
+
+        await expect(ballot.delegate(deployer)).to.be.revertedWith(
+          "Self-delegation is not allowed"
+        );
+      });
+    });
+
+    // Continue with detection of loop in the delegation.
   });
 });
