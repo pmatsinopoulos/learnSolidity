@@ -12,4 +12,15 @@ contract BasicMath {
       return (0, true);
     }
   }
+
+  function subtractor(uint _a, uint _b) external pure returns(uint difference, bool error) {
+    uint result = 0;
+    unchecked {
+      result = _a - _b;
+      if (result <= _a) {
+        return (result, false);
+      }
+      return (0, true);
+    }
+  }
 }
