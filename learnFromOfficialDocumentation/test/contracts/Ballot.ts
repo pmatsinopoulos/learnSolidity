@@ -147,6 +147,144 @@ describe("Ballot", function () {
       });
     });
 
-    // Continue with detection of loop in the delegation.
+    context("when there is a loop in delegation", function () {
+      it("reverts", async function () {
+        const { ballot, deployer, otherAccount, thirdAccount } =
+          await loadFixture(deployBallotFixture);
+
+        // setup
+
+        await ballot.giveRightToVote(otherAccount);
+        await ballot.giveRightToVote(thirdAccount);
+
+        // otherAccount delegates to thirdAccount
+        await ballot.connect(otherAccount).delegate(thirdAccount);
+        // thirdAccount delegates to deployer
+        await ballot.connect(thirdAccount).delegate(deployer);
+
+        // fire
+
+        // deployer delegates to otherAccount
+        await expect(ballot.delegate(otherAccount)).to.be.revertedWith(
+          "Found a loop in delegation."
+        );
+      });
+    });
+
+    context("when the delegatee does not have the right to vote", function () {
+      it("reverts", async function () {
+        const { ballot, otherAccount } = await loadFixture(deployBallotFixture);
+
+        // fire
+        await expect(ballot.delegate(otherAccount)).to.be.revertedWith(
+          "Delegatee should be allowed to vote"
+        );
+      });
+    });
+
+    it("renders that caller as having voted", async function () {
+      const { ballot, deployer, otherAccount } = await loadFixture(
+        deployBallotFixture
+      );
+
+      // setup
+      await ballot.giveRightToVote(otherAccount);
+
+      // fire
+      await ballot.delegate(otherAccount);
+
+      // I get the voters
+      const voter = await ballot.voters(deployer);
+
+      expect(voter.voted).to.equal(true);
+    });
+
+    it("sets the delegate for the caller to be the given address", async function () {
+      const { ballot, deployer, otherAccount } = await loadFixture(
+        deployBallotFixture
+      );
+
+      // setup
+      await ballot.giveRightToVote(otherAccount);
+
+      // fire
+      await ballot.delegate(otherAccount);
+
+      // I get the voters
+      const voter = await ballot.voters(deployer);
+
+      expect(voter.delegate).to.equal(otherAccount);
+    });
+
+    context("when delegation has chained delegation", function () {
+      it("sets the delegate to be the end of the chain and not the given address", async function () {
+        const { ballot, deployer, otherAccount, thirdAccount } =
+          await loadFixture(deployBallotFixture);
+
+        // setup
+
+        await ballot.giveRightToVote(otherAccount);
+        await ballot.giveRightToVote(thirdAccount);
+
+        // otherAccount delegates to thirdAccount
+        await ballot.connect(otherAccount).delegate(thirdAccount);
+
+        // fire
+
+        await ballot.delegate(otherAccount);
+
+        const voter = await ballot.voters(deployer);
+
+        expect(voter.delegate).to.equal(thirdAccount);
+      });
+    });
+
+    context("when the delegatee has already voted", function () {
+      it("increments the vote of the delegatee by the weight of the caller", async function () {
+        const { ballot, deployer, otherAccount } = await loadFixture(
+          deployBallotFixture
+        );
+
+        // setup
+
+        const proposalIndex = 0n;
+        await ballot.giveRightToVote(otherAccount);
+        await ballot.connect(otherAccount).vote(proposalIndex);
+        const proposalCountBefore = (await ballot.proposals(proposalIndex))
+          .voteCount;
+
+        const senderWeight = (await ballot.voters(deployer)).weight;
+
+        // fire
+
+        await ballot.delegate(otherAccount);
+
+        const proposalCountAfter = (await ballot.proposals(proposalIndex))
+          .voteCount;
+
+        expect(proposalCountAfter).to.equal(proposalCountBefore + senderWeight);
+      });
+    });
+
+    context("when the delegatee has not already voted", function () {
+      it("increases the delegatee weight by the sender weight", async function () {
+        const { ballot, deployer, otherAccount } = await loadFixture(
+          deployBallotFixture
+        );
+
+        // setup
+        await ballot.giveRightToVote(otherAccount);
+        const senderWeight = (await ballot.voters(deployer)).weight;
+        const voterWeightBefore = (await ballot.voters(otherAccount)).weight;
+
+        // fire
+
+        await ballot.delegate(otherAccount);
+
+        const voterWeightAfter = (await ballot.voters(otherAccount)).weight;
+
+        expect(voterWeightAfter).to.equal(voterWeightBefore + senderWeight);
+      });
+    });
   });
 });
